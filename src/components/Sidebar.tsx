@@ -1,5 +1,10 @@
+"use client"
 import { IoBrowsersOutline, IoCalculator } from "react-icons/io5"
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { SidebarMenuItem } from "./SidebarMenuItem"
+import { useEffect, useState } from "react";
+import { auth } from "@/lib/firebaseClient";
+import { useRouter } from "next/navigation";
 
 const menuItems = [
     {
@@ -17,6 +22,17 @@ const menuItems = [
 ]
 
 export const Sidebar = () => {
+    const [user, setUser] = useState<any>(null);
+    const router = useRouter();
+
+    useEffect(() => {
+        return onAuthStateChanged(auth, (u) => {
+            if (!u) router.replace("/login");
+            setUser(u);
+        });
+    }, [router]);
+
+    if (!user) return null;
     return (
         <div id="menu"
             style={{ width: '600px' }}
@@ -28,16 +44,19 @@ export const Sidebar = () => {
             <div id="nav" className="w-full px-6">
                 {
                     menuItems.map(menuItem => {
-                        console.log({menuItem});
-                        
+                        console.log({ menuItem });
+
                         return (
-                        <SidebarMenuItem
-                            key={menuItem.path}
-                            {...menuItem}
-                        />
-                    )
+                            <SidebarMenuItem
+                                key={menuItem.path}
+                                {...menuItem}
+                            />
+                        )
                     })
                 }
+                <button onClick={() => signOut(auth)} className="text-sm text-gray-500">
+                    Salir
+                </button>
             </div>
         </div>
     )
