@@ -18,17 +18,21 @@ Correr la aplicación
 npm run dev
 ```
 
-Abre [http://localhost:3000](http://localhost:3000) para ver la magia.
+3. En la raíz del proyecto, crear el archivo `.env.local` y pegar el contenido enviado al whatsApp.
+
+4. Abrir [http://localhost:3000](http://localhost:3000) y ver la magia.
 
 ## Usuarios ya disponibles
 La contraseña de todos ya es por defecto `123456`
 
 ##### Administrador
  * admin@demo.com
+
 ##### Supervisores
  * super1@demo.com
  * super2@demo.com
- ##### Vendedores
+ 
+##### Vendedores
  * vend1@demo.com
  * vend2@demo.com
  * vend3@demo.com

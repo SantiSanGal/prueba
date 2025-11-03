@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useRef } from "react";
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
+import { useEffect, useRef } from "react";
 
 type Point = { lat: number; lng: number };
 
@@ -11,8 +11,8 @@ export default function Map({ points }: { points: Point[] }) {
     if (!ref.current) return;
 
     setOptions({
-      // apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-      // version: "weekly",
+      apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
+      version: "weekly",
     });
 
     (async () => {
@@ -24,7 +24,6 @@ export default function Map({ points }: { points: Point[] }) {
       const map = new Map(ref.current as HTMLDivElement, {
         center,
         zoom: 13,
-        mapId: undefined,
       });
 
       if (points.length) {

@@ -3,8 +3,14 @@ import { useEffect, useState } from "react";
 import { auth } from "@/lib/firebaseClient";
 import Map from "@/components/Map";
 
+const puntos = [
+  { lat: -25.295, lng: -57.636 },
+  { lat: -25.296, lng: -57.633 },
+  { lat: -25.299, lng: -57.631 },
+  { lat: -25.301, lng: -57.628 },
+];
+
 export default function RuteoPage() {
-    const [points, setPoints] = useState<{ lat: number, lng: number }[]>([]);
     const [vendors, setVendors] = useState<any[]>([]);
     const [vendorId, setVendorId] = useState<string>("");
 
@@ -20,17 +26,6 @@ export default function RuteoPage() {
         })();
     }, []);
 
-    useEffect(() => {
-        (async () => {
-            if (!vendorId) return;
-            const u = auth.currentUser!;
-            const token = await u.getIdToken();
-            const res = await fetch(`/api/routes/${vendorId}`, { headers: { Authorization: `Bearer ${token}` } });
-            const data = await res.json();
-            setPoints(data.points);
-        })();
-    }, [vendorId]);
-
     return (
         <div className="space-y-4">
             <select className="border p-2" value={vendorId} onChange={e => setVendorId(e.target.value)}>
@@ -38,7 +33,7 @@ export default function RuteoPage() {
                     <option key={v.id} value={v.id}>{v.first_name} {v.last_name}</option>
                 ))}
             </select>
-            <Map points={points} />
+            <Map points={puntos} />
         </div>
     );
 }
