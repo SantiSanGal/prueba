@@ -1,5 +1,5 @@
 "use client"
-import { IoBrowsersOutline, IoCalculator } from "react-icons/io5"
+import { IoAccessibility, IoMap } from "react-icons/io5"
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { SidebarMenuItem } from "./SidebarMenuItem"
 import { useEffect, useState } from "react";
@@ -9,15 +9,15 @@ import { useRouter } from "next/navigation";
 const menuItems = [
     {
         path: '/vendedor',
-        icon: <IoBrowsersOutline size={40} />,
+        icon: <IoAccessibility size={30} />,
         title: 'Vendedor',
         subTitle: 'Lista de Vendedores'
     },
     {
         path: '/ruteo',
-        icon: <IoCalculator size={40} />,
+        icon: <IoMap size={40} />,
         title: 'Rutas',
-        subTitle: 'Rutas'
+        subTitle: 'Rutas de Vendedores'
     },
 ]
 
