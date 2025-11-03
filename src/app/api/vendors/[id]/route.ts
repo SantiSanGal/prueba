@@ -41,7 +41,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { id: vendorId } = params;
+  const { id: vendorId } = await params;
   if (!(await canManageVendor(user.uid, vendorId, roles))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -53,15 +53,14 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     const vend = await client.query(
       `SELECT u.id, u.person_id
-         FROM app_user u
-        WHERE u.id = $1
-          AND EXISTS (
-            SELECT 1 FROM user_role ur
-            JOIN role r ON r.id = ur.role_id
-            WHERE ur.user_id = u.id AND r.name = 'vendedor'
-          )`,
+        FROM app_user u
+        WHERE u.id = $1`,
       [vendorId]
     );
+
+    console.log({vend});
+    
+
     if (vend.rowCount === 0) {
       await client.query("ROLLBACK");
       return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
@@ -95,7 +94,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { id: vendorId } = params;
+  const { id: vendorId } = await params;
   if (!(await canManageVendor(user.uid, vendorId, roles))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -106,15 +105,11 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
     const vend = await client.query(
       `SELECT u.id, u.person_id
-         FROM app_user u
-        WHERE u.id = $1
-          AND EXISTS (
-            SELECT 1 FROM user_role ur
-            JOIN role r ON r.id = ur.role_id
-            WHERE ur.user_id = u.id AND r.name = 'vendedor'
-          )`,
+        FROM app_user u
+        WHERE u.id = $1`,
       [vendorId]
     );
+
     if (vend.rowCount === 0) {
       await client.query("ROLLBACK");
       return NextResponse.json({ error: "Vendor not found" }, { status: 404 });

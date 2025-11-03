@@ -71,15 +71,55 @@ export async function POST(req: NextRequest) {
       WHERE u.firebase_uid = $1`,
     [user.uid]
   );
-  const roles = roleRows.map(r => r.name as string);
+  const roles = roleRows.map((r) => r.name as string);
   if (!roles.includes("super_admin") && !roles.includes("supervisor")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const body = await req.json();
   const client = await pool.connect();
+
   try {
     await client.query("BEGIN");
+
+    const reqUserRes = await client.query(
+      `SELECT id FROM app_user WHERE firebase_uid=$1`,
+      [user.uid]
+    );
+    const requesterUserId = reqUserRes.rows[0]?.id;
+    if (!requesterUserId) {
+      await client.query("ROLLBACK");
+      return NextResponse.json({ error: "Requester not found" }, { status: 400 });
+    }
+
+    let supervisorUserId: string | null = null;
+
+    if (roles.includes("super_admin")) {
+      if (!body.supervisorUserId) {
+        await client.query("ROLLBACK");
+        return NextResponse.json({ error: "supervisorUserId is required for super_admin" }, { status: 400 });
+      }
+      const supCheck = await client.query(
+        `SELECT 1
+           FROM app_user u
+          WHERE u.id=$1
+            AND EXISTS (
+              SELECT 1
+                FROM user_role ur
+                JOIN role r ON r.id = ur.role_id
+               WHERE ur.user_id = u.id AND r.name = 'supervisor'
+            )`,
+        [body.supervisorUserId]
+      );
+      if (supCheck.rowCount === 0) {
+        await client.query("ROLLBACK");
+        return NextResponse.json({ error: "Invalid supervisorUserId" }, { status: 400 });
+      }
+      supervisorUserId = body.supervisorUserId;
+    } else if (roles.includes("supervisor")) {
+      supervisorUserId = requesterUserId;
+    }
+
     const person = await client.query(
       `INSERT INTO person (first_name,last_name) VALUES ($1,$2) RETURNING id`,
       [body.firstName, body.lastName]
@@ -88,13 +128,25 @@ export async function POST(req: NextRequest) {
       `INSERT INTO app_user (person_id,firebase_uid,email) VALUES ($1,$2,$3) RETURNING id`,
       [person.rows[0].id, body.firebaseUid ?? `TEMP_${Date.now()}`, body.email ?? null]
     );
+    const newVendorUserId = userRow.rows[0].id;
+
     await client.query(
       `INSERT INTO user_role (user_id, role_id)
        SELECT $1, id FROM role WHERE name='vendedor'`,
-      [userRow.rows[0].id]
+      [newVendorUserId]
     );
+
+    if (supervisorUserId) {
+      await client.query(
+        `INSERT INTO supervisor_vendor (supervisor_user_id, vendor_user_id)
+         VALUES ($1, $2)
+         ON CONFLICT DO NOTHING`,
+        [supervisorUserId, newVendorUserId]
+      );
+    }
+
     await client.query("COMMIT");
-    return NextResponse.json({ id: userRow.rows[0].id }, { status: 201 });
+    return NextResponse.json({ id: newVendorUserId }, { status: 201 });
   } catch (e) {
     await client.query("ROLLBACK");
     return NextResponse.json({ error: "Failed to create" }, { status: 500 });
